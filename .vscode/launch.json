@@ -59,8 +59,11 @@
             "module": "tools.copier_update",
             "args": [
                 "--org", "Spearhead-Odoo", 
-                "--repos", "flow_scm,base_import_addons,odoo_addons,spearhead_addons,humane_addons,panatel_addons,apollo_addons",
-                "--branches", "17.0", 
+                //"--repos", "flow_scm,base_import_addons,odoo_addons,apollo_addons,odoo_generic_addons",
+                //"--repos", "emecorp_odoo,flow_odoo,globalimport_odoo,humane_odoo,metanoia_odoo,panatel_odoo,rmc_odoo,spearhead_odoo",
+                // "--branches", "17.0", 
+                "--repos", "sunchodesa_odoo,dulcione_odoo,llanticentro_odoo",
+                "--branches", "13.0", 
                 "--git-protocol", "https",
                 "--git-user-name", "odoo-ci-cd", 
                 "--git-user-email", "odoo.ci.cd@gmail.com",

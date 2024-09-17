@@ -159,7 +159,7 @@ def main(
                     print(f"Skipping {repo} because it has no .copier-answers.yml")
                     continue
                 _fix_copier_answers()
-                r = subprocess.call(["copier", "update", "-f", "--trust", "--vcs-ref", "spearhead"])
+                r = subprocess.call(["copier", "update", "-f", "--trust", "--vcs-ref", "custom"])
                 if r != 0:
                     print("$" * 10, f"copier update failed on {repo}")
                     continue
