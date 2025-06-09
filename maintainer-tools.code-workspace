@@ -6,5 +6,13 @@
 		{
 			"path": "../oca-addons-repo-template"
 		}
-	]
+	],
+	"settings": {
+		"python.languageServer": "None",
+		"workbench.colorCustomizations": {
+			"activityBar.background": "#033435",
+			"titleBar.activeBackground": "#04484A",
+			"titleBar.activeForeground": "#ECFEFE"
+		}
+	}
 }

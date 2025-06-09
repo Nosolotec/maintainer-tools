@@ -10,9 +10,10 @@
             "request": "launch",
             "module": "tools.create_branch",
             "args": [
-                "17.0", 
-                "--org-name", "Spearhead-Odoo", 
-                "--copier-template-vcs-ref", "spearhead"],
+                "18.0", 
+                "--repo", "nosolotec",
+                "--org-name", "Nosolotec", 
+                "--copier-template-vcs-ref", "custom"],
             "justMyCode": true
         },
         {
@@ -21,7 +22,7 @@
             "request": "launch",
             "module": "tools.gen_addon_readme",
             "args": [
-                "--org-name", "Spearhead-Odoo", "--repo-name", "odoo_templates", "--branch", "17.0",
+                "--org-name", "Nosolotec", "--repo-name", "odoo_templates", "--branch", "17.0",
                 "--addons-dir", "/mnt/celm1990/Doodba/odoo16_ec/odoo/custom/src/localizacion", 
                 //"--addon-dir", "l10n_ec_extended"
             ],
@@ -33,7 +34,7 @@
             "request": "launch",
             "module": "tools.oca_towncrier",
             "args": [
-                "--org", "Spearhead-Odoo", "--repo", "odoo_templates",
+                "--org", "Nosolotec", "--repo", "odoo_templates",
                 "--addon-dir", "/mnt/celm1990/Doodba/odoo16_ec/odoo/custom/src/localizacion/l10n_ec_delivery_note", 
                 //"--addon-dir", "l10n_ec_extended"
             ],
@@ -45,7 +46,7 @@
             "request": "launch",
             "module": "tools.fork_repos",
             "args": [
-                "Spearhead-Odoo",
+                "Nosolotec",
                 //"--repos", "account-budgeting",
                 //"--repos", "account-closing",
                 //"--default-branch", "17.0",
@@ -58,7 +59,7 @@
             "request": "launch",
             "module": "tools.copier_update",
             "args": [
-                "--org", "Spearhead-Odoo", 
+                "--org", "Nosolotec", 
                 //"--repos", "flow_scm,base_import_addons,odoo_addons,apollo_addons,odoo_generic_addons",
                 //"--repos", "emecorp_odoo,flow_odoo,globalimport_odoo,humane_odoo,metanoia_odoo,panatel_odoo,rmc_odoo,spearhead_odoo",
                 // "--branches", "17.0", 
@@ -76,8 +77,8 @@
             "request": "launch",
             "module": "tools.update_all_remotes",
             "args": [
-                "Spearhead-Odoo",
-                "--repos_yaml", "/mnt/respaldo/Doodba/doodba_odoo17_spearhead/odoo/custom/src/repos.yaml",
+                "Nosolotec",
+                "--repos_yaml", "/home/danilo/projects/doodba-farmamia/odoo/custom/src/repos.yaml",
                 "--default-branch", "17.0",
             ],
             "justMyCode": true
@@ -88,8 +89,8 @@
             "request": "launch",
             "module": "tools.update_last_commit",
             "args": [
-                "Spearhead-Odoo",
-                "--repos_yaml", "/mnt/respaldo/Doodba/doodba_odoo17_spearhead/odoo/custom/src/repos.yaml",
+                "Nosolotec",
+                "--repos_yaml", "/home/danilo/projects/doodba-farmamia/odoo/custom/src/repos.yaml",
                 "--default-branch", "17.0",
             ],
             "justMyCode": true
@@ -112,7 +113,7 @@
             "request": "launch",
             "module": "tools.update_default_branch",
             "args": [
-                "Spearhead-Odoo",
+                "Nosolotec",
                 "--default-branch", "17.0",
             ],
             "justMyCode": true

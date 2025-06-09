@@ -1,22 +1,8 @@
 """UPDATE all addons project.
 """
-import collections , yaml
-
 import click
-import yaml
-from yaml.loader import SafeLoader
+from ruamel.yaml import YAML
 from . import github_login
-
-_mapping_tag = yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG
-
-def dict_representer(dumper, data):
-  return dumper.represent_mapping(_mapping_tag, data.iteritems())
-
-def dict_constructor(loader, node):
-  return collections.OrderedDict(loader.construct_pairs(node))
-
-yaml.add_representer( collections.OrderedDict , dict_representer )
-yaml.add_constructor( _mapping_tag, dict_constructor )
 
 
 @click.command("Update all repositories")
@@ -30,17 +16,25 @@ yaml.add_constructor( _mapping_tag, dict_constructor )
     "default_branch",
 )
 def main(org_name, repos_yaml, default_branch=None):
+    yaml = YAML()
+    yaml.preserve_quotes = True
+    yaml.indent(mapping=2, sequence=4, offset=2)  # Fuerza indentación de listas
     with open(repos_yaml) as f:
-        data = yaml.load(f, Loader=SafeLoader)
-                    
+        data = yaml.load(f)
     # Connect to GitHub
     github = github_login.login()
     org = github.organization(org_name)
     for repo in org.repositories(type="all"):
         if repo.name.startswith("l10n"):
             continue
+        if repo.name in ["odoo", "enterprise"]:
+            continue
         repo_info = data.get(f"./{repo.name}")
         if not repo_info:
+            continue
+        # Saltar repos de la OCA
+        origin_url = repo_info.get("remotes", {}).get("origin", "")
+        if "OCA" in origin_url or "oca" in origin_url:
             continue
         all_branches = []
         for branch in repo.branches():
@@ -56,7 +50,8 @@ def main(org_name, repos_yaml, default_branch=None):
                 print(f'Repositorio: {repo.name}')
                 print(f'Ultimo Commit: {last_commit.sha}')
     with open(repos_yaml, "w") as f:
-        yaml.dump(data, f, default_flow_style=False, sort_keys=False)
+        yaml.dump(data, f)
+
 
 if __name__ == '__main__':
    main()

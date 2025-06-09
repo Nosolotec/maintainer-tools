@@ -14,7 +14,7 @@ from .oca_projects import get_repositories, temporary_clone
 @click.argument("new_branch")
 @click.option(
     "--copier-template",
-    default="gh:spearhead-odoo/oca-addons-repo-template",
+    default="gh:nosolotec/oca-addons-repo-template",
     show_default=True,
 )
 @click.option(
@@ -34,7 +34,7 @@ from .oca_projects import get_repositories, temporary_clone
 def main(new_branch, copier_template, copier_template_vcs_ref, repos, org_name):
     for repo in repos or get_repositories():
         print("=" * 10, repo, "=" * 10)
-        with temporary_clone(repo, protocol="https"):
+        with temporary_clone(repo, protocol="https",org_name=org_name):
             # check if branch already exists
             if subprocess.check_output(
                 ["git", "ls-remote", "--head", "origin", new_branch]
