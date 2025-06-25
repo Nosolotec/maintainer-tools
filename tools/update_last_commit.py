@@ -34,7 +34,7 @@ def main(org_name, repos_yaml, default_branch=None):
             continue
         # Saltar repos de la OCA
         origin_url = repo_info.get("remotes", {}).get("origin", "")
-        if "OCA" in origin_url or "oca" in origin_url:
+        if "OCA" in origin_url or "/oca/" in origin_url:
             continue
         all_branches = []
         for branch in repo.branches():
