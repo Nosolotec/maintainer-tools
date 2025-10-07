@@ -46,6 +46,9 @@ def main(org_name, repos_yaml, default_branch=None):
                 last_commit = repo.branch(default_branch).commit
                 if merge == "origin $ODOO_VERSION":
                     continue
+                # No actualizar referencias a pull requests (refs/pull/*/head)
+                if "refs/pull/" in merge:
+                    continue
                 repo_info.get("merges")[indx] = f"origin {last_commit.sha}"
                 print(f'Repositorio: {repo.name}')
                 print(f'Ultimo Commit: {last_commit.sha}')
