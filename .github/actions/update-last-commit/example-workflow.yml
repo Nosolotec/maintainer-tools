@@ -1,0 +1,66 @@
+# Example workflow for using the update-last-commit action in a doodba project
+# Copy this file to your doodba repo as .github/workflows/update-repos.yml
+
+name: Update Last Commit for Deployment
+
+on:
+  # Manual trigger with inputs
+  workflow_dispatch:
+    inputs:
+      default_branch:
+        description: 'Odoo version branch'
+        required: true
+        default: '17.0'
+        type: choice
+        options:
+          - '19.0'
+          - '18.0'
+          - '17.0'
+          - '16.0'
+          - '15.0'
+          - '14.0'
+
+  # Or schedule it (e.g., before deployments)
+  # schedule:
+  #   - cron: '0 6 * * 1'  # Every Monday at 6 AM
+
+jobs:
+  update-repos:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Update last commit in prod.yaml
+        id: update
+        uses: tu-org/maintainer-tools/.github/actions/update-last-commit@main
+        with:
+          org-name: 'tu-organizacion'
+          repos-yaml: 'odoo/custom/src/repos.yaml'  # Adjust path as needed
+          default-branch: ${{ inputs.default_branch || '17.0' }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create Pull Request
+        if: steps.update.outputs.updated_count > 0
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "chore: update repos to latest commits for ${{ inputs.default_branch || '17.0' }}"
+          title: "Update repos to latest commits"
+          body: |
+            This PR updates the following repositories to their latest commits:
+
+            **Updated repositories (${{ steps.update.outputs.updated_count }}):**
+            ${{ steps.update.outputs.updated_repos }}
+
+            ---
+            *Automated by update-last-commit action*
+          branch: update-repos-${{ github.run_number }}
+          base: main
+          labels: |
+            automated
+            deployment

@@ -1,0 +1,54 @@
+name: 'Update Last Commit'
+description: 'Updates the last commit SHA in a repos YAML file for gitaggregate deployments'
+author: 'Nosolotec'
+
+branding:
+  icon: 'git-commit'
+  color: 'purple'
+
+inputs:
+  org-name:
+    description: 'GitHub organization name to fetch repositories from'
+    required: true
+  repos-yaml:
+    description: 'Path to the repos YAML file (e.g., odoo/custom/src/repos.yaml)'
+    required: true
+  default-branch:
+    description: 'Default branch to get the last commit from (e.g., 17.0)'
+    required: true
+  github-token:
+    description: 'GitHub token for API access'
+    required: true
+    default: ${{ github.token }}
+
+outputs:
+  updated_count:
+    description: 'Number of repositories updated'
+    value: ${{ steps.update.outputs.updated_count }}
+  updated_repos:
+    description: 'Comma-separated list of updated repository names'
+    value: ${{ steps.update.outputs.updated_repos }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      shell: bash
+      run: |
+        pip install github3.py ruamel.yaml
+
+    - name: Update last commit in repos YAML
+      id: update
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+        INPUT_ORG_NAME: ${{ inputs.org-name }}
+        INPUT_REPOS_YAML: ${{ inputs.repos-yaml }}
+        INPUT_DEFAULT_BRANCH: ${{ inputs.default-branch }}
+      run: |
+        python ${{ github.action_path }}/update_last_commit.py
