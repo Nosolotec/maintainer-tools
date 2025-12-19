@@ -28,6 +28,9 @@ outputs:
   updated_repos:
     description: 'Comma-separated list of updated repository names'
     value: ${{ steps.update.outputs.updated_repos }}
+  commit_messages:
+    description: 'List of commit messages for each updated repository'
+    value: ${{ steps.update.outputs.commit_messages }}
 
 runs:
   using: 'composite'

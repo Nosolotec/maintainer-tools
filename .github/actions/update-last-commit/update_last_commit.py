@@ -36,6 +36,7 @@ def main():
     org = github.organization(org_name)
 
     updated_repos = []
+    commit_messages = []
 
     for repo in org.repositories(type="all"):
         # Skip localization repos
@@ -76,6 +77,10 @@ def main():
             if merges[idx] != new_merge:
                 merges[idx] = new_merge
                 updated_repos.append(repo.name)
+                # Get first line of commit message and commit URL
+                commit_msg = last_commit.message.split("\n")[0] if last_commit.message else "No message"
+                commit_url = f"https://github.com/{org_name}/{repo.name}/commit/{last_commit.sha}"
+                commit_messages.append(f"- **{repo.name}**: {commit_msg} ([{last_commit.sha[:7]}]({commit_url}))")
                 print(f"Updated: {repo.name} -> {last_commit.sha}")
 
     # Save updated YAML
@@ -85,12 +90,19 @@ def main():
     # Set output for GitHub Actions
     if updated_repos:
         print(f"\nTotal repositories updated: {len(updated_repos)}")
+        print("\nCommit messages:")
+        for msg in commit_messages:
+            print(msg)
         # Write to GITHUB_OUTPUT if available
         github_output = os.environ.get("GITHUB_OUTPUT")
         if github_output:
             with open(github_output, "a") as f:
                 f.write(f"updated_count={len(updated_repos)}\n")
                 f.write(f"updated_repos={','.join(updated_repos)}\n")
+                # Write commit messages as multiline output
+                f.write("commit_messages<<EOF\n")
+                f.write("\n".join(commit_messages))
+                f.write("\nEOF\n")
     else:
         print("\nNo repositories were updated")
 
