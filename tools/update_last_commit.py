@@ -1,8 +1,13 @@
 """UPDATE all addons project.
 """
+import re
+
 import click
 from ruamel.yaml import YAML
+
 from . import github_login
+
+SHA_RE = re.compile(r"^[0-9a-f]{40}$")
 
 
 @click.command("Update all repositories")
@@ -43,15 +48,31 @@ def main(org_name, repos_yaml, default_branch=None):
             continue
         for indx, merge in enumerate(repo_info.get("merges")):
             if "origin " in merge:
-                last_commit = repo.branch(default_branch).commit
                 if merge == "origin $ODOO_VERSION":
                     continue
                 # No actualizar referencias a pull requests (refs/pull/*/head)
                 if "refs/pull/" in merge:
                     continue
-                repo_info.get("merges")[indx] = f"origin {last_commit.sha}"
+                last_commit = repo.branch(default_branch).commit
+                new_merge = f"origin {last_commit.sha}"
+                if repo_info.get("merges")[indx] == new_merge:
+                    continue
+                old_sha = merge.split()[1] if len(merge.split()) == 2 else None
+                repo_info.get("merges")[indx] = new_merge
                 print(f'Repositorio: {repo.name}')
                 print(f'Ultimo Commit: {last_commit.sha}')
+                # Listar todos los commits entre el SHA anterior y el nuevo
+                if old_sha and SHA_RE.match(old_sha):
+                    try:
+                        comparison = repo.compare_commits(old_sha, last_commit.sha)
+                        commits = list(comparison.commits)
+                        print(f'  Commits nuevos: {len(commits)}')
+                        for c in reversed(commits):
+                            msg = c.commit.message.split("\n")[0] if c.commit.message else "Sin mensaje"
+                            url = f"https://github.com/{org_name}/{repo.name}/commit/{c.sha}"
+                            print(f'  - {msg} ({url})')
+                    except Exception as e:
+                        print(f'  (No se pudieron obtener commits intermedios: {e})')
     with open(repos_yaml, "w") as f:
         yaml.dump(data, f)
 

@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
 """Update last commit SHA in repos YAML file for gitaggregate deployments."""
 import os
+import re
 import sys
 
 import github3
 from ruamel.yaml import YAML
+
+SHA_RE = re.compile(r"^[0-9a-f]{40}$")
 
 
 def main():
@@ -75,13 +78,34 @@ def main():
             new_merge = f"origin {last_commit.sha}"
 
             if merges[idx] != new_merge:
+                old_sha = merge.split()[1] if len(merge.split()) == 2 else None
                 merges[idx] = new_merge
                 updated_repos.append(repo.name)
-                # Get first line of commit message and commit URL
-                commit_msg = last_commit.message.split("\n")[0] if last_commit.message else "No message"
-                commit_url = f"https://github.com/{org_name}/{repo.name}/commit/{last_commit.sha}"
-                commit_messages.append(f"- **{repo.name}**: {commit_msg} ([{last_commit.sha[:7]}]({commit_url}))")
                 print(f"Updated: {repo.name} -> {last_commit.sha}")
+
+                # Get all commits between old and new SHA
+                repo_header = f"### {repo.name}"
+                if old_sha and SHA_RE.match(old_sha):
+                    try:
+                        comparison = repo.compare_commits(old_sha, last_commit.sha)
+                        commits = list(comparison.commits)
+                        repo_header = f"### {repo.name} ({len(commits)} commit{'s' if len(commits) != 1 else ''})"
+                        commit_messages.append(repo_header)
+                        for c in reversed(commits):
+                            msg = c.commit.message.split("\n")[0] if c.commit.message else "No message"
+                            url = f"https://github.com/{org_name}/{repo.name}/commit/{c.sha}"
+                            commit_messages.append(f"- {msg} ([{c.sha[:7]}]({url}))")
+                    except Exception as e:
+                        commit_messages.append(repo_header)
+                        commit_msg = last_commit.message.split("\n")[0] if last_commit.message else "No message"
+                        commit_url = f"https://github.com/{org_name}/{repo.name}/commit/{last_commit.sha}"
+                        commit_messages.append(f"- {commit_msg} ([{last_commit.sha[:7]}]({commit_url}))")
+                        print(f"  Warning: could not compare commits: {e}")
+                else:
+                    commit_messages.append(repo_header)
+                    commit_msg = last_commit.message.split("\n")[0] if last_commit.message else "No message"
+                    commit_url = f"https://github.com/{org_name}/{repo.name}/commit/{last_commit.sha}"
+                    commit_messages.append(f"- {commit_msg} ([{last_commit.sha[:7]}]({commit_url}))")
 
     # Save updated YAML
     with open(repos_yaml, "w") as f:
