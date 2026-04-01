@@ -32,8 +32,8 @@ def main(org_name, repos_yaml, default_branch=None):
     for repo in org.repositories(type="all"):
         if repo.name.startswith("l10n"):
             continue
-        if repo.name in ["odoo", "enterprise"]:
-            continue
+        # if repo.name in ["odoo", "enterprise"]:
+        #     continue
         repo_info = data.get(f"./{repo.name}")
         if not repo_info:
             continue
