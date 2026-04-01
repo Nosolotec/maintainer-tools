@@ -8,6 +8,38 @@ import github3
 from ruamel.yaml import YAML
 
 SHA_RE = re.compile(r"^[0-9a-f]{40}$")
+MAX_COMMITS = 500
+
+
+def get_commits_between(repo, old_sha, new_sha):
+    """Return list of commits (oldest→newest) between old_sha and new_sha.
+
+    Tries the compare API first; if it returns no commits falls back to
+    iterating repo.commits() from new_sha until old_sha is found.
+    """
+    # --- Try compare API ---
+    try:
+        comparison = repo.compare_commits(old_sha, new_sha)
+        if comparison is not None:
+            commits = list(comparison.commits)
+            if commits:
+                return list(reversed(commits))
+            print(f"  compare_commits returned 0 commits, falling back to iteration")
+        else:
+            print(f"  compare_commits returned None, falling back to iteration")
+    except Exception as e:
+        print(f"  compare_commits raised {e!r}, falling back to iteration")
+
+    # --- Fallback: iterate commits newest→oldest, stop at old_sha ---
+    commits = []
+    for commit in repo.commits(sha=new_sha):
+        if commit.sha == old_sha:
+            break
+        commits.append(commit)
+        if len(commits) >= MAX_COMMITS:
+            print(f"  Reached {MAX_COMMITS} commits limit, stopping iteration")
+            break
+    return commits  # already newest→oldest; caller uses them in this order
 
 
 def main():
@@ -84,28 +116,23 @@ def main():
                 print(f"Updated: {repo.name} -> {last_commit.sha}")
 
                 # Get all commits between old and new SHA
-                repo_header = f"### {repo.name}"
+                last_commit_msg = last_commit.commit.message.split("\n")[0] if last_commit.commit.message else "No message"
+                last_commit_url = f"https://github.com/{org_name}/{repo.name}/commit/{last_commit.sha}"
                 if old_sha and SHA_RE.match(old_sha):
-                    try:
-                        comparison = repo.compare_commits(old_sha, last_commit.sha)
-                        commits = list(comparison.commits)
-                        repo_header = f"### {repo.name} ({len(commits)} commit{'s' if len(commits) != 1 else ''})"
-                        commit_messages.append(repo_header)
-                        for c in reversed(commits):
+                    commits = get_commits_between(repo, old_sha, last_commit.sha)
+                    repo_header = f"### {repo.name} ({len(commits)} commit{'s' if len(commits) != 1 else ''})"
+                    commit_messages.append(repo_header)
+                    if commits:
+                        for c in commits:
                             msg = c.commit.message.split("\n")[0] if c.commit.message else "No message"
                             url = f"https://github.com/{org_name}/{repo.name}/commit/{c.sha}"
                             commit_messages.append(f"- {msg} ([{c.sha[:7]}]({url}))")
-                    except Exception as e:
-                        commit_messages.append(repo_header)
-                        commit_msg = last_commit.message.split("\n")[0] if last_commit.message else "No message"
-                        commit_url = f"https://github.com/{org_name}/{repo.name}/commit/{last_commit.sha}"
-                        commit_messages.append(f"- {commit_msg} ([{last_commit.sha[:7]}]({commit_url}))")
-                        print(f"  Warning: could not compare commits: {e}")
+                    else:
+                        commit_messages.append(f"- {last_commit_msg} ([{last_commit.sha[:7]}]({last_commit_url}))")
                 else:
+                    repo_header = f"### {repo.name}"
                     commit_messages.append(repo_header)
-                    commit_msg = last_commit.message.split("\n")[0] if last_commit.message else "No message"
-                    commit_url = f"https://github.com/{org_name}/{repo.name}/commit/{last_commit.sha}"
-                    commit_messages.append(f"- {commit_msg} ([{last_commit.sha[:7]}]({commit_url}))")
+                    commit_messages.append(f"- {last_commit_msg} ([{last_commit.sha[:7]}]({last_commit_url}))")
 
     # Save updated YAML
     with open(repos_yaml, "w") as f:
