@@ -46,8 +46,8 @@ def main():
         if repo.name.startswith("l10n"):
             continue
         # Skip core Odoo repos
-        if repo.name in ["odoo", "enterprise"]:
-            continue
+        # if repo.name in ["odoo", "enterprise"]:
+        #     continue
 
         repo_info = data.get(f"./{repo.name}")
         if not repo_info:
