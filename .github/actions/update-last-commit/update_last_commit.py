@@ -90,9 +90,20 @@ def main():
         if "OCA" in origin_url or "/oca/" in origin_url.lower():
             continue
 
-        # Check if default branch exists
+        # Determine the effective branch from target in repos.yaml
+        target = repo_info.get("target", "")
+        if target:
+            # target format: "origin <branch>" e.g. "origin 17.0-farmamia"
+            target_branch = target.split()[-1] if target.split() else default_branch
+            # If target uses $ODOO_VERSION, resolve to default_branch
+            if target_branch == "$ODOO_VERSION":
+                target_branch = default_branch
+        else:
+            target_branch = default_branch
+
+        # Check if target branch exists
         all_branches = [branch.name for branch in repo.branches()]
-        if default_branch not in all_branches:
+        if target_branch not in all_branches:
             continue
 
         # Update merges with last commit SHA
@@ -106,7 +117,7 @@ def main():
             if "refs/pull/" in merge:
                 continue
 
-            last_commit = repo.branch(default_branch).commit
+            last_commit = repo.branch(target_branch).commit
             new_merge = f"origin {last_commit.sha}"
 
             if merges[idx] != new_merge:
