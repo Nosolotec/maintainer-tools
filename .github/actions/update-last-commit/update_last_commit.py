@@ -81,7 +81,9 @@ def main():
         # if repo.name in ["odoo", "enterprise"]:
         #     continue
 
-        repo_info = data.get(f"./{repo.name}")
+        repo_info = data.get(f"./{repo.name}") or data.get(
+            f"./{repo.name.replace('_', '-')}"
+        )
         if not repo_info:
             continue
 
