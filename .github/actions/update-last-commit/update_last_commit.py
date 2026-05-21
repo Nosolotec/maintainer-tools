@@ -87,10 +87,10 @@ def main():
         if not repo_info:
             continue
 
-        # Skip OCA repos
-        origin_url = repo_info.get("remotes", {}).get("origin", "")
-        if "OCA" in origin_url or "/oca/" in origin_url.lower():
-            continue
+        # # Skip OCA repos
+        # origin_url = repo_info.get("remotes", {}).get("origin", "")
+        # if "OCA" in origin_url or "/oca/" in origin_url.lower():
+        #     continue
 
         # Determine the effective branch from target in repos.yaml
         target = repo_info.get("target", "")
