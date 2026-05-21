@@ -136,10 +136,13 @@ def main():
                     repo_header = f"### {repo.name} ({len(commits)} commit{'s' if len(commits) != 1 else ''})"
                     commit_messages.append(repo_header)
                     if commits:
-                        for c in commits:
+                        display_commits = commits[:50]
+                        for c in display_commits:
                             msg = c.commit.message.split("\n")[0] if c.commit.message else "No message"
                             url = f"https://github.com/{org_name}/{repo.name}/commit/{c.sha}"
                             commit_messages.append(f"- {msg} ([{c.sha[:7]}]({url}))")
+                        if len(commits) > 50:
+                            commit_messages.append(f"- _...and {len(commits) - 50} more commits_")
                     else:
                         commit_messages.append(f"- {last_commit_msg} ([{last_commit.sha[:7]}]({last_commit_url}))")
                 else:
