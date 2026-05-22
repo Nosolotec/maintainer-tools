@@ -8,6 +8,9 @@ import github3
 from ruamel.yaml import YAML
 
 SHA_RE = re.compile(r"^[0-9a-f]{40}$")
+GITHUB_URL_RE = re.compile(
+    r"(?:https://github\.com/|git@github\.com:)([^/]+)/([^/.]+?)(?:\.git)?$"
+)
 MAX_COMMITS = 500
 
 
@@ -103,9 +106,34 @@ def main():
         else:
             target_branch = default_branch
 
-        # Check if target branch exists
-        all_branches = [branch.name for branch in repo.branches()]
-        if target_branch not in all_branches:
+        # Resolve the source repository from the origin remote URL
+        # (the origin in repos.yaml may point to a different org, e.g. OCA)
+        origin_url = repo_info.get("remotes", {}).get("origin", "")
+        source_repo = repo
+        source_owner = org_name
+        source_repo_name = repo.name
+        if origin_url:
+            m = GITHUB_URL_RE.match(origin_url)
+            if m:
+                _owner, _name = m.groups()
+                if _owner.lower() != org_name.lower():
+                    try:
+                        source_repo = github.repository(_owner, _name)
+                        source_owner = _owner
+                        source_repo_name = _name
+                        print(f"  Using origin repo: {_owner}/{_name}")
+                    except Exception as e:
+                        print(
+                            f"  Warning: could not access origin "
+                            f"{_owner}/{_name}: {e}"
+                        )
+
+        # Check if target branch exists in source repo
+        try:
+            target_branch_obj = source_repo.branch(target_branch)
+        except Exception:
+            target_branch_obj = None
+        if not target_branch_obj:
             continue
 
         # Update merges with last commit SHA
@@ -119,7 +147,7 @@ def main():
             if "refs/pull/" in merge:
                 continue
 
-            last_commit = repo.branch(target_branch).commit
+            last_commit = target_branch_obj.commit
             new_merge = f"origin {last_commit.sha}"
 
             if merges[idx] != new_merge:
@@ -130,16 +158,16 @@ def main():
 
                 # Get all commits between old and new SHA
                 last_commit_msg = last_commit.commit.message.split("\n")[0] if last_commit.commit.message else "No message"
-                last_commit_url = f"https://github.com/{org_name}/{repo.name}/commit/{last_commit.sha}"
+                last_commit_url = f"https://github.com/{source_owner}/{source_repo_name}/commit/{last_commit.sha}"
                 if old_sha and SHA_RE.match(old_sha):
-                    commits = get_commits_between(repo, old_sha, last_commit.sha)
+                    commits = get_commits_between(source_repo, old_sha, last_commit.sha)
                     repo_header = f"### {repo.name} ({len(commits)} commit{'s' if len(commits) != 1 else ''})"
                     commit_messages.append(repo_header)
                     if commits:
                         display_commits = commits[:50]
                         for c in display_commits:
                             msg = c.commit.message.split("\n")[0] if c.commit.message else "No message"
-                            url = f"https://github.com/{org_name}/{repo.name}/commit/{c.sha}"
+                            url = f"https://github.com/{source_owner}/{source_repo_name}/commit/{c.sha}"
                             commit_messages.append(f"- {msg} ([{c.sha[:7]}]({url}))")
                         if len(commits) > 50:
                             commit_messages.append(f"- _...and {len(commits) - 50} more commits_")
